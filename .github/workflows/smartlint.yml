@@ -22,7 +22,7 @@ jobs:
           model: deepseek-chat
           dirpath: '/workdir/src/brpc'
           runType: ccodescan
-          maxIterations: 1
+          maxIterations: 30
           githubIssueReport: true
       - name: output check
         shell: bash
