@@ -18,12 +18,11 @@ jobs:
         uses: SamYuan1990/OpenAI_CodeAgent-action@main
         with:
           baseURL: https://api.deepseek.com
-          apiKey: dummy
+          apiKey: ${{ secrets.API_KEY }}
           model: deepseek-chat
           dirpath: '/workdir/src/brpc'
           runType: ccodescan
           maxIterations: 1
-          dryRun: true
           githubIssueReport: true
       - name: output check
         shell: bash
