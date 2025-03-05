@@ -1,0 +1,37 @@
+name: scan C code brpc
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+
+permissions: write-all
+
+
+jobs:
+  test-scan-c-code-brpc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout_target
+        uses: actions/checkout@v4
+
+      - name: use action to generate suggestion for deployment settings
+        id: Lint_with_LLM
+        uses: SamYuan1990/OpenAI_CodeAgent-action@main
+        with:
+          baseURL: https://api.deepseek.com
+          apiKey: dummy
+          model: deepseek-chat
+          dirpath: '/workdir/src/brpc'
+          runType: ccodescan
+          maxIterations: 1
+          dryRun: true
+          githubIssueReport: true
+      - name: output check
+        shell: bash
+        run: |
+          echo '${{ steps.Lint_with_LLM.outputs.LLMresponse }}'
+          echo '${{ steps.Lint_with_LLM.outputs.final_prompt }}'
+          echo '${{ steps.Lint_with_LLM.outputs.avg_prompt_precent }}'
+          echo '${{ steps.Lint_with_LLM.outputs.avg_content_precent }}'
+          echo '${{ steps.Lint_with_LLM.outputs.avg_time_usage }}'
+          echo '${{ steps.Lint_with_LLM.outputs.avg_inputToken }}'
+          echo '${{ steps.Lint_with_LLM.outputs.avg_outputToken }}'
