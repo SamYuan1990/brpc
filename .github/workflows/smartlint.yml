@@ -41,7 +41,9 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b ./
           go install github.com/devops-kung-fu/bomber@latest 
-          ./syft scan .  --select-catalogers "c++" -o cyclonedx-json -vv  > sbom.json 
+          pip install conan
+          conan profile detect
+          ./syft scan . -o cyclonedx-json -vv  > sbom.json 
           cat sbom.json
           bomber scan ./sbom.json --output=json --debug > cve.json
           cat cve.json
