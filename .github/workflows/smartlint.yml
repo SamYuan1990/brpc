@@ -4,7 +4,6 @@ on: # yamllint disable-line rule:truthy
 
 permissions: write-all
 
-
 jobs:
   test-scan-c-code-brpc:
     runs-on: ubuntu-latest
@@ -12,7 +11,6 @@ jobs:
       - name: Checkout
         id: checkout_target
         uses: actions/checkout@v4
-
       - name: use action to generate suggestion for deployment settings
         id: Lint_with_LLM
         uses: SamYuan1990/OpenAI_CodeAgent-action@main
@@ -22,15 +20,46 @@ jobs:
           model: deepseek-chat
           dirpath: '/workdir/src/brpc'
           runType: ccodescan
-          maxIterations: 30
-          githubIssueReport: true
-      - name: output check
-        shell: bash
+          maxIterations: 970
+          dryRun: true
+      - name: Upload Artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist_brpc_c
+          path: |
+            GenAI_output
+
+  test-scan-dep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout_target
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+      - name: generate CVE.json
         run: |
-          echo '${{ steps.Lint_with_LLM.outputs.LLMresponse }}'
-          echo '${{ steps.Lint_with_LLM.outputs.final_prompt }}'
-          echo '${{ steps.Lint_with_LLM.outputs.avg_prompt_precent }}'
-          echo '${{ steps.Lint_with_LLM.outputs.avg_content_precent }}'
-          echo '${{ steps.Lint_with_LLM.outputs.avg_time_usage }}'
-          echo '${{ steps.Lint_with_LLM.outputs.avg_inputToken }}'
-          echo '${{ steps.Lint_with_LLM.outputs.avg_outputToken }}'
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b ./
+          go install github.com/devops-kung-fu/bomber@latest 
+          ./syft scan . -o cyclonedx-json -vv  > sbom.json 
+          cat sbom.json
+          bomber scan ./sbom.json --output=json --debug > cve.json
+          cat cve.json
+      - name: use action to generate suggestion for deployment settings
+        id: Lint_with_LLM
+        uses: SamYuan1990/OpenAI_CodeAgent-action@main
+        with:
+          baseURL: https://api.deepseek.com
+          apiKey: ${{ secrets.API_KEY }}
+          model: deepseek-chat
+          dirpath: '/workdir/src/'
+          runType: CVEDependency
+          dryRun: true
+      - name: Upload Artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist_brpc_cve
+          path: |
+            cve.json
+            GenAI_output
